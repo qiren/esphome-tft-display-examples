@@ -1,0 +1,62 @@
+# ESPHome mipi_spi example: PJ2801H22-23H10P200
+# 2.8" 240x320 TN TFT, ST7789V driver, 4-wire SPI, on an ESP32-S3-DevKitC-1
+# Product page: https://www.displayengineer.com/products/2-8-inch-240x320-tft-lcd-spi-pj2801h22-23h10p200
+# Driver docs:  https://esphome.io/components/display/mipi_spi/
+#
+# STATUS: written from the ESPHome mipi_spi docs and the public product page.
+# NOT yet verified on hardware. Every line marked "# TESTING-NEEDED" must be
+# confirmed on a real panel (and against the module datasheet) before you rely on it.
+
+esphome:
+  name: pj2801h22-demo
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+
+logger:
+
+spi:
+  clk_pin: GPIO12            # example pin, change to your wiring
+  mosi_pin: GPIO11           # example pin, change to your wiring
+  # The panel is write-only in this example; no MISO needed.
+
+# Backlight: 4-LED backlight. Drive it through a transistor/LED driver,
+# not directly from the GPIO. Polarity and LED current per datasheet.
+output:
+  - platform: ledc
+    pin: GPIO14              # TESTING-NEEDED: active-high assumed; depends on your driver circuit
+    id: backlight_pwm
+
+light:
+  - platform: monochromatic
+    output: backlight_pwm
+    name: "Backlight"
+    restore_mode: ALWAYS_ON
+
+display:
+  - platform: mipi_spi
+    model: ST7789V           # built-in model: default 240x320, built-in init sequence
+    cs_pin: GPIO10
+    dc_pin: GPIO9
+    reset_pin: GPIO8
+    data_rate: 10MHz         # TESTING-NEEDED: driver default; raise (20/40MHz) only after the panel works
+    rotation: 0              # native orientation is portrait 240x320; use rotation for landscape, don't swap width/height
+    invert_colors: false     # TESTING-NEEDED: flip to true if colours look like a photo negative
+    color_order: bgr         # TESTING-NEEDED: driver default; set to rgb if red and blue are swapped
+    # If the image is shifted or has a garbage strip on one edge, set dimensions
+    # explicitly (values below are the defaults for a 240x320 ST7789V):
+    # dimensions:
+    #   width: 240
+    #   height: 320
+    #   offset_width: 0      # TESTING-NEEDED
+    #   offset_height: 0     # TESTING-NEEDED
+    lambda: |-
+      // Colour-bar test: red / green / blue, top to bottom.
+      // Must have no side effects: without PSRAM the driver uses a partial
+      // buffer and calls this lambda several times per frame.
+      int h = it.get_height() / 3;
+      it.filled_rectangle(0, 0,     it.get_width(), h, Color(255, 0, 0));
+      it.filled_rectangle(0, h,     it.get_width(), h, Color(0, 255, 0));
+      it.filled_rectangle(0, 2 * h, it.get_width(), it.get_height() - 2 * h, Color(0, 0, 255));
