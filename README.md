@@ -70,6 +70,10 @@ pin-out in the datasheet before connecting anything.
 | Bars appear but flicker or show noise at higher speed | Signal integrity | Shorter wires or a proper FPC adapter; lower `data_rate` |
 | Nothing at all, backlight off | Backlight not driven | Check the backlight driver circuit and GPIO polarity |
 
+## Moving off ili9xxx / st7789v / st7735
+
+ESPHome removes those platforms in 2027.5.0 (PRs #20687 to #20690). [`MIGRATING-to-mipi_spi.md`](MIGRATING-to-mipi_spi.md) has before/after YAML for ILI9341, ST7789V, ST7735, GC9A01A and ILI9488, plus what to do with ILI9163 (`CUSTOM`). Like the rest of this repo, it hasn't been tested on hardware yet.
+
 ## Need the datasheet or a different panel?
 
 Datasheets, pin-outs and init sequences can be requested on each product page or via
