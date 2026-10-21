@@ -12,6 +12,14 @@ The fix is [esphome#17646](https://github.com/esphome/esphome/pull/17646). In th
 
 Backlight on with a black screen can still have other causes on these boards: the reset and CS lines often sit on an I2C expander (PCA9554/TCA9554), so check that the expander shows up in the boot log I2C scan before blaming the panel.
 
+## Still on the old `platform: st7701s`? It never pulses reset_pin
+
+A lot of ST7701S configs passed around the forums (for example the Waveshare ESP32-S3-Touch-LCD-2.1 ones) use the older `st7701s` display platform, not `mipi_rgb`. Reading the 2026.10.0 source of that component (`esphome/components/st7701s/st7701s.cpp`), `reset_pin` is accepted in YAML and printed in the config dump, but nothing in `setup()` ever writes to it. The component sends the init sequence over SPI, then creates the RGB panel and calls `esp_lcd_panel_reset()`, which resets the RGB peripheral, not the panel's RESX line.
+
+So on boards where the panel reset sits on an I2C expander, the line just stays wherever the expander leaves it at boot. If your board pulls it high, everything works and you never notice. If it does not, you get backlight and a black screen whatever you draw. `mipi_rgb` does drive it: it pulses the reset pin high, low, high before init (`mipi_rgb.cpp`), and on 2026.10.0 the ST7701S model also waits 50 ms afterwards (see above).
+
+If you are stuck on a black ST7701S panel with the old platform, moving the same pins to `mipi_rgb` with `model: ST7701S` on 2026.10.0 is the first thing we would try. We have not tested that on a 2.1C board ourselves.
+
 ## `rotation: 180` ignored on pure RGB panels (mipi_rgb)
 
 On 2026.9.x, `rotation: 180` was silently ignored on `mipi_rgb` models that have no SPI init interface, and the log printed `Rotation: 0 degrees`. [esphome#20757](https://github.com/esphome/esphome/pull/20757) fixes it by rotating these panels in software. The PR lists the affected models: ESP32-S3-TOUCH-LCD-4.3, WAVESHARE-5-1024X600, ESP32-S3-TOUCH-LCD-7-800X480, ESP32-8048S070, ESP32-8048S050, CROWPANEL-ADVANCE-7 and RPI. ST7701S boards and `CUSTOM` are unchanged.
