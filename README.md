@@ -82,6 +82,10 @@ ESPHome removes those platforms in 2027.5.0 (PRs #20687 to #20690). [`MIGRATING-
 
 [`IDENTIFY-CONTROLLER.md`](IDENTIFY-CONTROLLER.md) shows how to read the ID over SPI before picking a `mipi_spi` model: ST7789V answers `85 85 52` (04h, or DAh/DBh/DCh one byte at a time), ILI9341 answers `00 93 41` on D3h.
 
+## Round GC9A01A with LVGL
+
+[`ROUND-GC9A01A-LVGL.md`](ROUND-GC9A01A-LVGL.md) is a starting config for a 240x240 round panel with an LVGL arc and CST816 touch, plus the round-specific gotchas (invisible corners, 25% buffer, rotation under `lvgl:`). Not tested on hardware yet.
+
 ## Need the datasheet or a different panel?
 
 Datasheets, pin-outs and init sequences can be requested on each product page or via
