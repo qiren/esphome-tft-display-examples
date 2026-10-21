@@ -78,6 +78,10 @@ ESPHome removes those platforms in 2027.5.0 (PRs #20687 to #20690). [`MIGRATING-
 
 [`ESPHOME-2026.10-display-notes.md`](ESPHOME-2026.10-display-notes.md) covers the 2026.10.0 fixes that matter for TFT/RGB panels: ST7701S black after reboot (50 ms reset delay, #17646) and `rotation: 180` on pure RGB `mipi_rgb` panels (#20757).
 
+## Not sure which controller you have?
+
+[`IDENTIFY-CONTROLLER.md`](IDENTIFY-CONTROLLER.md) shows how to read the ID over SPI before picking a `mipi_spi` model: ST7789V answers `85 85 52` (04h, or DAh/DBh/DCh one byte at a time), ILI9341 answers `00 93 41` on D3h.
+
 ## Need the datasheet or a different panel?
 
 Datasheets, pin-outs and init sequences can be requested on each product page or via
