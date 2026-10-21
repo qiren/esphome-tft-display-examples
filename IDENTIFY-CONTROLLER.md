@@ -1,0 +1,51 @@
+# Is it an ST7789V or an ILI9341? Read the ID instead of guessing
+
+We get this a lot: a 2.4" or 2.8" 240×320 SPI panel shows up with no marking that tells you the
+controller, and the seller listing says "ILI9341" while the board was clearly built for ST7789.
+Both controllers speak the same basic MIPI DCS commands, so a wrong driver often half works
+(colours inverted, image offset, mirrored) and you end up chasing the wrong thing.
+
+If the module breaks out SDO/MISO, you can just ask the chip. No MISO pin on the FPC or header
+means the panel is wired for write-only (or 3-wire with a shared SDA line) and this trick won't
+work without extra effort.
+
+## ST7789V: RDDID (04h), or the three single-byte reads
+
+Sitronix ST7789V datasheet v1.3, section 9.1.3 (p.165), RDDID 04h returns a dummy parameter
+followed by ID1 / ID2 / ID3. The default values are **0x85, 0x85, 0x52**, so you're looking for
+`0x858552`.
+
+The catch on serial interfaces is the dummy. On SPI the 24-bit RDDID read (the "4-line serial
+protocol for RDDID" diagram, Figure 16 in v1.3) puts a single dummy clock in front of the data,
+not a whole dummy byte. If your read routine assumes byte alignment you get the ID shifted by one
+bit and it looks like garbage. The same section says RDID1 / RDID2 / RDID3 (**DAh, DBh, DCh**)
+return parameters 2, 3 and 4 of 04h. Reading those one byte at a time is the easier way to get a
+clean `85 85 52`.
+
+## ILI9341: Read ID4 (D3h)
+
+The value people check for is `0x009341` from Read ID4 (D3h), after the dummy byte. The trezor
+firmware does exactly this: it tries 04h first, and if the answer isn't ST7789V (or GC9307) it
+falls back to D3h and treats `0x009341` as ILI9341 (see `display-stm32_t.h` in
+[trezor-core](https://github.com/trezor/trezor-core/blob/master/embed/extmod/modtrezorui/display-stm32_t.h),
+which cites "8.3.23 Read ID4 (D3h)" of the ILI9341V datasheet). Their comment also notes that
+RDDID on an ILI9341 is supposed to be 0x8000 and some modules just return 0.
+
+## Doing it on an ESP32
+
+You need the read before any display driver grabs the bus. Easiest path is a tiny Arduino sketch
+with [ropg/spi_lcd_read](https://github.com/ropg/spi_lcd_read), which exists for exactly this
+(ILI9341, ST7789 and friends, only depends on `SPI.h`), then put the right model in your ESPHome
+`mipi_spi` config. Keep the SPI clock low for reads. The ST7789V datasheet gives a 150 ns minimum serial clock cycle
+for reads, so anything around 1 to 5 MHz is safe.
+
+Once you know it's ST7789V, the PJ2801H22 config in this repo is a reasonable starting point:
+[`esphome/pj2801h22-st7789v-esp32s3.yaml`](esphome/pj2801h22-st7789v-esp32s3.yaml).
+
+---
+
+Not bench-tested by us on every module yet. The register values above are copied from the
+datasheet and the linked source, not from our own logic analyser captures. This repo is
+maintained by [Display Engineer](https://www.displayengineer.com/), a display module maker;
+if you need the full datasheet for one of our panels, ask on the
+[ST7789V controller page](https://www.displayengineer.com/driver-ic/st7789v).
