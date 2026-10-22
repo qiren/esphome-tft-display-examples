@@ -8,9 +8,11 @@ If you have a 480x480 ST7701S board (Waveshare ESP32-S3-Touch-LCD-4, 2.1, Guitio
 
 The fix is [esphome#17646](https://github.com/esphome/esphome/pull/17646). In the author's words, the ST7701S was getting a duplicate SWRESET with no delay after it, and "the published delay (5ms) after reset for an ST7701S appears to be insufficient". The PR removes the duplicate and makes the ST7701S model wait 50 ms after reset (other models keep the 10 ms default). It also moves the init sequence so it is only sent after the rest of setup has succeeded.
 
-`reset_delay` is a model default inside the component, not a YAML option you can set, so the practical step is just: update to 2026.10.0 and power-cycle. If your own firmware (ESP-IDF, Arduino) drives an ST7701S directly, it is worth giving it the same 50 ms after reset rather than the published 5 ms.
+`reset_delay` is a model default inside the component, not a YAML option you can set. Updating to 2026.10.0 alone is usually not enough: you still need a real `reset_pin` that actually toggles the panel RESX line, then a power cycle. On a lot of these Waveshare / Guition boards that pin sits behind an I2C expander, and the model preset has to name it (or you set it in YAML). The reporter on [esphome#17636](https://github.com/esphome/esphome/issues/17636) tried the #17646 build first and still got black-after-reboot until LCD_RST was driven through the expander; after that, cold boots survived. We have not run that board ourselves, this is just what they wrote in the issue thread.
 
-Backlight on with a black screen can still have other causes on these boards: the reset and CS lines often sit on an I2C expander (PCA9554/TCA9554), so check that the expander shows up in the boot log I2C scan before blaming the panel.
+If your own firmware (ESP-IDF, Arduino) drives an ST7701S directly, give it the same 50 ms after reset rather than the published 5 ms, and make sure RESX is actually pulsed, not left floating on an expander.
+
+Backlight on with a black screen can still have other causes on these boards: check that the expander shows up in the boot log I2C scan before blaming the panel.
 
 ## Still on the old `platform: st7701s`? It never pulses reset_pin
 
