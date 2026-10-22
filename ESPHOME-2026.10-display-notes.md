@@ -34,11 +34,26 @@ One side effect to watch for after updating: on those same models a `transform:`
 - `mipi_spi` has a new model for the Waveshare ESP32-S3-Touch-LCD-1.46 (412x412 SPD2010, QSPI) ([esphome#19056](https://github.com/esphome/esphome/pull/19056)). The PR notes that the board's PCA9554 reset pin has to be given in YAML.
 - `mipi_spi`, `mipi_rgb` and `mipi_dsi` now keep init sequences in flash instead of RAM.
 
+## On dev after 2026.10.0, not released yet
+
+If your LilyGo T-Display S3 Pro feels sluggish on the `T-DISPLAY-S3-PRO` preset, that's not your imagination. I checked the 2026.10.0 model file and it doesn't set `data_rate`, so the ST7796 runs at the `mipi_spi` default of 10MHz. [esphome#21370](https://github.com/esphome/esphome/pull/21370) was merged into dev on Oct 22 and sets the preset to 40MHz. The PR says a full 480x222 frame took about 170 ms at 10MHz. The math agrees: 480 x 222 x 16 bits is about 1.7 Mbit, so roughly 170 ms at 10MHz and about 43 ms at 40MHz, before LVGL adds anything. Until it lands in a release you can set it yourself, since a config value still wins over the preset:
+
+```yaml
+display:
+  - platform: mipi_spi
+    model: T-DISPLAY-S3-PRO
+    data_rate: 40MHz
+```
+
+The PR author tested it with an SD card sharing the same SPI bus. I find the width x height x 16 / clock trick handy for any SPI panel. It tells you the best case for a full redraw before you start blaming LVGL.
+
+Round 412x412 SPD2010 folks, one to watch: [esphome#21354](https://github.com/esphome/esphome/pull/21354) (still open when I wrote this) moves the Waveshare 1.46" settings into a generic `SPD2010` model and adds `SEEED-SENSECAP-WATCHER`. The detail I liked is that on the Watcher the panel reset is tied to the chip reset, so there's no reset GPIO and the model falls back to a software reset. If it gets merged, a custom SPD2010 board could start from `model: SPD2010` plus its own pins. I haven't run either board myself.
+
 ## Still true: ili9xxx / st7789v / st7735 go away in 2027.5.0
 
 The 2026.10.0 release notes do not mention it, but the removal of `ili9xxx`, `st7789v` and `st7735` (PRs #20687 to #20690) is still scheduled for 2027.5.0. See [`MIGRATING-to-mipi_spi.md`](MIGRATING-to-mipi_spi.md).
 
-Sources: [ESPHome 2026.10.0 changelog](https://esphome.io/changelog/2026.10.0/) and the PRs linked above.
+Sources: [ESPHome 2026.10.0 changelog](https://esphome.io/changelog/2026.10.0/), the 2026.10.0 [`lilygo.py`](https://github.com/esphome/esphome/blob/2026.10.0/esphome/components/mipi_spi/models/lilygo.py) model file, and the PRs linked above.
 
 ---
 Written by Display Engineer (TFT/LCD module maker, https://www.displayengineer.com). Corrections with test results are welcome as issues or PRs.
