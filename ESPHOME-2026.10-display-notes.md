@@ -49,11 +49,33 @@ The PR author tested it with an SD card sharing the same SPI bus. I find the wid
 
 Round 412x412 SPD2010 folks, one to watch: [esphome#21354](https://github.com/esphome/esphome/pull/21354) (still open when I wrote this) moves the Waveshare 1.46" settings into a generic `SPD2010` model and adds `SEEED-SENSECAP-WATCHER`. The detail I liked is that on the Watcher the panel reset is tied to the chip reset, so there's no reset GPIO and the model falls back to a software reset. If it gets merged, a custom SPD2010 board could start from `model: SPD2010` plus its own pins. I haven't run either board myself.
 
+## "Pin 2 is used in multiple places" on the Waveshare 7" after updating
+
+This one showed up the day after the release ([esphome#21379](https://github.com/esphome/esphome/issues/21379)). Someone's ESP32-S3-Touch-LCD-7 config compiled fine on 2026.9.1, and on 2026.10.0 `esphome config` stops with `Pin 2 is used in multiple places`, pointing at both a `switch: platform: gpio` and the `mipi_rgb` display. The switch was their backlight, on CH422G pin 2.
+
+I went and read the model file. The `ESP32-S3-TOUCH-LCD-7-800X480` preset already claims that pin: it sets `enable_pin` to CH422G pins 2 and 6 (the 4.3" preset it extends uses pin 2 as enable and pin 3 as reset). So the display was already switching pin 2 on at boot, and the extra switch was a second owner of the same pin. That part didn't change between versions, the preset is identical in 2026.9.1 and 2026.10.0.
+
+What changed is the check. [esphome#18939](https://github.com/esphome/esphome/pull/18939), which landed in 2026.10.0, makes the pin registry group expander pins by the hub they resolve to. As far as I can read `esphome/pins.py`, before that the preset's pins (hub id left empty) and your pins (`ch422g: ch422g_hub`) were counted in different buckets, so the clash slipped through. Now they're counted as the same CH422G and the duplicate gets caught. I'd call that the check finally doing its job rather than a regression.
+
+Two ways out. If you never turn the backlight off, just delete the switch, the preset already enables it. If you do want a backlight switch in HA, take pin 2 out of the display's `enable_pin` and keep your switch:
+
+```yaml
+display:
+  - platform: mipi_rgb
+    model: ESP32-S3-TOUCH-LCD-7-800X480
+    enable_pin:
+      - ch422g: ch422g_hub
+        number: 6
+    # rest of your display config unchanged
+```
+
+I kept pin 6 because the preset sets it and I don't know what it gates on every board revision. The maintainer's first reply on the issue was to double check which CH422G pin the backlight is really on, so look at your board's schematic before you copy pin numbers from anyone, me included. And the 7C is a different story: it uses a CH32V003 expander on other I2C pins, and there's no ESPHome preset for it yet, so people are starting from `ESP32-8048S070` and overriding the pins. I haven't run either board.
+
 ## Still true: ili9xxx / st7789v / st7735 go away in 2027.5.0
 
 The 2026.10.0 release notes do not mention it, but the removal of `ili9xxx`, `st7789v` and `st7735` (PRs #20687 to #20690) is still scheduled for 2027.5.0. See [`MIGRATING-to-mipi_spi.md`](MIGRATING-to-mipi_spi.md).
 
-Sources: [ESPHome 2026.10.0 changelog](https://esphome.io/changelog/2026.10.0/), the 2026.10.0 [`lilygo.py`](https://github.com/esphome/esphome/blob/2026.10.0/esphome/components/mipi_spi/models/lilygo.py) model file, and the PRs linked above.
+Sources: [ESPHome 2026.10.0 changelog](https://esphome.io/changelog/2026.10.0/), the 2026.10.0 [`lilygo.py`](https://github.com/esphome/esphome/blob/2026.10.0/esphome/components/mipi_spi/models/lilygo.py) and [`mipi_rgb/models/waveshare.py`](https://github.com/esphome/esphome/blob/2026.10.0/esphome/components/mipi_rgb/models/waveshare.py) model files, [`esphome/pins.py`](https://github.com/esphome/esphome/blob/2026.10.0/esphome/pins.py), and the PRs linked above.
 
 ---
 Written by Display Engineer (TFT/LCD module maker, https://www.displayengineer.com). Corrections with test results are welcome as issues or PRs.
