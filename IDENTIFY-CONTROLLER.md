@@ -42,6 +42,34 @@ for reads, so anything around 1 to 5 MHz is safe.
 Once you know it's ST7789V, the PJ2801H22 config in this repo is a reasonable starting point:
 [`esphome/pj2801h22-st7789v-esp32s3.yaml`](esphome/pj2801h22-st7789v-esp32s3.yaml).
 
+## The Cheap Yellow Display case: same listing, different glass
+
+This is the one that keeps coming up. In [Gume#200](https://github.com/iamankushpandit/Gume/issues/200)
+someone running the 2-USB CYD on the ILI9341 driver got a picture, just washed out. Another user
+pointed out the exact same board is sold with either the ST or the ILI chip, even from the same
+supplier and the same Amazon listing. It gets better: after switching to the community ST7789
+config with BGR, the colours came back but red and blue were swapped. That board wanted RGB.
+So even two ST7789 CYDs don't agree on colour order.
+
+That's why I'd stop trusting the listing and just read the ID at boot. 04h answers `85 85 52` on
+ST7789, D3h answers `00 93 41` on ILI9341, then pick the driver and colour order from that.
+[draftling PR #89](https://github.com/clackups/draftling/pull/89) does exactly this: it bit-bangs
+both reads, searches every bit offset because the dummy cycles differ between the two
+controllers, and falls back to ILI9341 if nothing answers. Their author notes it isn't tested on
+physical hardware either, so treat it as a reference, not gospel.
+
+The 2.4" ESP32-2432S024R has its own flavour of this. In
+[SquachWatch-CYD#88](https://github.com/skizzophrenic/SquachWatch-CYD/issues/88) the stock build
+gave a band of RGB noise across the bottom quarter of the screen, washed-out colours and mirrored
+text, while touch worked fine. Switching TFT_eSPI from `ILI9341_DRIVER` to `ILI9341_2_DRIVER`
+alone killed the noise band and the mirroring, and turning inversion on by default fixed the
+colours. The reporter reads it as a panel batch difference, not a blanket fix, which matches
+what you see on the 2.8" boards.
+
+If your CYD looks almost right but not quite, I'd check the ID first, then colour order, then
+inversion, in that order, before touching anything else. We haven't bench-tested these CYD
+variants ourselves, this is what those three threads report.
+
 ---
 
 Not bench-tested by us on every module yet. The register values above are copied from the
