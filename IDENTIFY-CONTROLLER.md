@@ -70,6 +70,29 @@ If your CYD looks almost right but not quite, I'd check the ID first, then colou
 inversion, in that order, before touching anything else. We haven't bench-tested these CYD
 variants ourselves, this is what those three threads report.
 
+## Not every ST7789 says 85 85 52
+
+I wrote above that 04h answers `85 85 52` on ST7789. That's the datasheet default, and plenty of
+boards do it, but not all of them. ropg keeps a list of raw register dumps from real boards in
+[`boards.md`](https://github.com/ropg/spi_lcd_read/blob/main/boards.md), and the Guition
+JC2432W328 (2.8", ST7789, capacitive touch) reads `81 81 b3` on 04h, and DAh / DBh / DCh give
+`81`, `81`, `b3` to match. The CYD2USB in the same list, also ST7789, gives the textbook
+`85 85 52`. I don't know why the Guition one differs, could be a different ST7789 variant or the
+module maker setting its own ID bytes. Point is, if your code only checks for `0x858552` it will
+call that board unknown.
+
+The ILI9341 side has its own trap. Both ILI9341 boards in that list (ESP32-2432S028 and
+ESP32-2432S024) return `00 00 00` on 04h, and D3h only shows `41 00 93 41` when it's read the
+"indexed" way (send D9h with a byte index first, then read). A plain sequential read of D3h gives
+all zeros on those same boards. ropg's README also says TFT_eSPI only does the indexed kind of
+read, which is why one library "sees" the ILI9341 and a hand-rolled read doesn't.
+
+So what I'd actually do: read D3h indexed first, and if the last two bytes are `93 41` it's an
+ILI9341. If D3h is all zeros but 04h read sequentially comes back non-zero, treat it as ST7789
+family whatever the exact bytes are, and log them so you know which batch you got. Ignore the
+indexed values for 04h in those dumps (`40 40 40`, `42 42 42`), they don't mean anything useful.
+Same caveat as before: these are other people's dumps, I haven't read these exact boards myself.
+
 ---
 
 Not bench-tested by us on every module yet. The register values above are copied from the
@@ -77,3 +100,6 @@ datasheet and the linked source, not from our own logic analyser captures. This 
 maintained by [Display Engineer](https://www.displayengineer.com/), a display module maker;
 if you need the full datasheet for one of our panels, ask on the
 [ST7789V controller page](https://www.displayengineer.com/driver-ic/st7789v).
+
+
+</cursor_untrusted_data_1337>
