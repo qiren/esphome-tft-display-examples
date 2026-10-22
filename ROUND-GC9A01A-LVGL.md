@@ -121,6 +121,40 @@ With a single touchscreen, LVGL picks it up on its own, no `touchscreens:` entry
 
 The `ESP32-2424S012` (1.28" round, GC9A01A) is a board preset in `mipi_spi`, so `model: ESP32-2424S012` sets the pins and inversion for you and you can skip most of the display block above.
 
+## Picked Setup200 in TFT_eSPI and got a blank screen?
+
+This one is easy to lose an evening on. A lot of GC9A01 wiring guides for the classic ESP32 tell you to wire SCLK 18, MOSI 23, CS 15, DC 2, RST 4. Those are the pins in TFT_eSPI's `Setup46_GC9A01_ESP32.h`. But if you scroll `User_Setup_Select.h` and pick `Setup200_GC9A01.h` instead, because the name looks like the plain GC9A01 one, you get completely different defaults: MOSI 15, SCLK 14, CS 5, DC 27, RST 33, backlight 22. I checked the raw file on Bodmer's master branch today and those are the numbers.
+
+So with the 18/23/15/2/4 wiring and Setup200 selected, the library is clocking data out on pins that aren't connected to anything. Nothing errors, the sketch runs, the backlight may or may not come on (Setup200 drives it on 22), and the panel just stays blank or white. Whichever setup file you pick, open it and make the `TFT_MOSI`, `TFT_SCLK`, `TFT_CS`, `TFT_DC`, `TFT_RST` and `TFT_BL` defines match what you actually soldered. Or pick Setup46 if you followed the 18/23 wiring. The file wins over whatever the tutorial says.
+
+If you'd rather skip TFT_eSPI, here's about the smallest ESPHome config for the same 18/23/15/2/4 wiring on a classic ESP32. In the 2026.10.0 `mipi_spi` source the only things it really insists on for a single-SPI panel are `model` and `dc_pin`. Width and height come from the GC9A01A definition (240x240), the SPI bus needs a clock and MOSI pin, and the data rate defaults to 10 MHz if you leave it out. I haven't bench-tested this exact file on a dev board either, so treat it as a starting point.
+
+```yaml
+esphome:
+  name: gc9a01a-minimal
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+spi:
+  clk_pin: GPIO18
+  mosi_pin: GPIO23
+
+display:
+  - platform: mipi_spi
+    model: GC9A01A
+    cs_pin: GPIO15
+    dc_pin: GPIO2
+    reset_pin: GPIO4
+    invert_colors: true   # TESTING-NEEDED, flip it if colours look like a negative
+    lambda: |-
+      it.fill(Color(0, 0, 255));
+```
+
+A solid blue fill is boring but it tells you straight away whether the wiring is right, before LVGL is in the picture. If your module has a BL pin, tie it to 3.3V for this test or add a `light` like the one in the big config above. GPIO2 is a strapping pin on the classic ESP32, which is fine for DC on most boards, but if yours refuses to flash with the display plugged in, move DC somewhere else and change the YAML to match.
+
 ## Sources
 
 - ESPHome `mipi_spi` display: https://esphome.io/components/display/mipi_spi/
@@ -128,5 +162,8 @@ The `ESP32-2424S012` (1.28" round, GC9A01A) is a board preset in `mipi_spi`, so 
 - ESPHome LVGL widgets (arc angles, `on_value` vs `on_release`, label text format): https://esphome.io/components/lvgl/widgets/
 - ESPHome `cst816` touchscreen: https://esphome.io/components/touchscreen/cst816/
 - `mipi_spi` source at 2026.10.0, `models/ili.py` (GC9A01A) and `models/cyd.py` (ESP32-2424S012): https://github.com/esphome/esphome/tree/2026.10.0/esphome/components/mipi_spi/models
+- TFT_eSPI `Setup200_GC9A01.h` (MOSI 15, SCLK 14, CS 5, DC 27, RST 33, BL 22): https://raw.githubusercontent.com/Bodmer/TFT_eSPI/master/User_Setups/Setup200_GC9A01.h
+- TFT_eSPI `Setup46_GC9A01_ESP32.h` (SCLK 18, MOSI 23, CS 15, DC 2, RST 4): https://raw.githubusercontent.com/Bodmer/TFT_eSPI/master/User_Setups/Setup46_GC9A01_ESP32.h
+- `mipi_spi` config validation at 2026.10.0 (`model` required, DC pin required outside quad mode, 10 MHz default data rate): https://github.com/esphome/esphome/blob/2026.10.0/esphome/components/mipi_spi/display.py
 
 I work at a display maker, so take that into account. We make round GC9A01 modules among other things, and the controller notes are on our [GC9A01 page](https://www.displayengineer.com/driver-ic/gc9a01). The config itself is plain ESPHome and should behave the same on any GC9A01A 240x240 panel.
