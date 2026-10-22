@@ -81,6 +81,16 @@ JC2432W328 (2.8", ST7789, capacitive touch) reads `81 81 b3` on 04h, and DAh / D
 module maker setting its own ID bytes. Point is, if your code only checks for `0x858552` it will
 call that board unknown.
 
+Same `81 81 b3` shows up in the wild with a name attached. DiSlord's
+[NanoVNA-D `lcd.c`](https://github.com/DiSlord/NanoVNA-D/blob/master/lcd.c)
+defines `ST7789P3_ID` as `0x8181B3` (that's the three RDDID bytes packed
+big-endian) and treats it the same as the datasheet ST7789V ID `0x858552`
+when picking the init sequence. So if your read comes back `81 81 b3`,
+don't invent a new driver — treat it as ST7789 family, and label the
+variant ST7789P3 if you care about logging. I haven't run that NanoVNA
+board myself; I'm just reading the `#define` and the `if (id == …)` that
+follows it on master.
+
 The ILI9341 side has its own trap. Both ILI9341 boards in that list (ESP32-2432S028 and
 ESP32-2432S024) return `00 00 00` on 04h, and D3h only shows `41 00 93 41` when it's read the
 "indexed" way (send D9h with a byte index first, then read). A plain sequential read of D3h gives
