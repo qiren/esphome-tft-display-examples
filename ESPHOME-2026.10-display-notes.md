@@ -69,13 +69,109 @@ display:
     # rest of your display config unchanged
 ```
 
-I kept pin 6 because the preset sets it and I don't know what it gates on every board revision. The maintainer's first reply on the issue was to double check which CH422G pin the backlight is really on, so look at your board's schematic before you copy pin numbers from anyone, me included. And the 7C is a different story: it uses a CH32V003 expander on other I2C pins, and there's no ESPHome preset for it yet, so people are starting from `ESP32-8048S070` and overriding the pins. I haven't run either board.
+I kept pin 6 because the preset sets it and I don't know what it gates on every board revision. The maintainer's first reply on the issue was to double check which CH422G pin the backlight is really on, so look at your board's schematic before you copy pin numbers from anyone, me included. And the 7C is a different story — see the next section.
+
+
+## Waveshare ESP32-S3-Touch-LCD-7C — no preset, hand-copy the RGB timing
+
+Got asked (and saw on HA) about the new Waveshare **7C** board. Short version: as of ESPHome
+2026.10.0 there is still **no** `mipi_rgb` model string for it. The Waveshare presets in
+[`waveshare.py`](https://github.com/esphome/esphome/blob/2026.10.0/esphome/components/mipi_rgb/models/waveshare.py)
+stop at things like `ESP32-S3-TOUCH-LCD-7-800X480` (CH422G expander). The 7C swapped that for a
+**CH32V003** at `0x24`, moved I2C to GPIO 47/48, and the RGB pin map / porch numbers are not the
+same as the older 7" preset. If you paste `model: ESP32-S3-TOUCH-LCD-7-800X480` onto a 7C you will
+get the wrong expander type and wrong green data pins (preset keeps 48/47 on the RGB bus; on the
+7C those pins are the I2C bus).
+
+What people are doing instead is starting from a generic panel model that only sets resolution /
+colour order, then overriding every pin and every porch by hand. FredTheFrog posted a working
+sketch on HA thread
+[t/1029890](https://community.home-assistant.io/t/waveshare-esp32-s3-touch-lcd-7c/1029890)
+(created 2026-10-22) using `model: ESP32-8048S070` plus full pin overrides, with
+`waveshare_io_ch32v003` for reset / touch reset / backlight PWM. I have not run a 7C on the bench
+myself — the numbers below are copied from that thread and from Waveshare's public schematic, not
+from our scope.
+
+```yaml
+i2c:
+  id: bus_a
+  sda: 47
+  scl: 48
+  scan: true
+  frequency: 400kHz
+
+waveshare_io_ch32v003:
+  id: io_exp
+  address: 0x24
+  i2c_id: bus_a
+
+display:
+  - platform: mipi_rgb
+    model: ESP32-8048S070
+    id: esp_display
+    dimensions:
+      width: 800
+      height: 480
+    color_order: rgb
+    invert_colors: true
+    auto_clear_enabled: false
+    de_pin: 5
+    hsync_pin:
+      number: 46
+      ignore_strapping_warning: true
+    vsync_pin:
+      number: 3
+      ignore_strapping_warning: true
+    pclk_pin: 7
+    pclk_frequency: 16MHz
+    pclk_inverted: true
+    hsync_back_porch: 16
+    hsync_front_porch: 16
+    hsync_pulse_width: 8
+    vsync_back_porch: 16
+    vsync_front_porch: 16
+    vsync_pulse_width: 8
+    reset_pin:
+      waveshare_io_ch32v003: io_exp
+      number: 3
+    data_pins:
+      red: [1, 2, 42, 41, 40]
+      green: [39, 0, 45, 9, 8, 21]
+      blue: [14, 38, 18, 17, 10]
+```
+
+A few things that bite when you hand-copy RGB timing like this.
+
+Don't trust the preset porch table. The stock `ESP32-S3-TOUCH-LCD-7-800X480` uses hsync 8/8/4 and
+vsync 16/16/4. The 7C sketch above uses 16/16/8 on both axes. Wrong porches usually show up as a
+shifted image, a thin black bar, or a panel that syncs then drops out when Wi-Fi spikes the PCLK
+budget — not a clean compile error.
+
+Green lane vs I2C. On the older 7" Waveshare boards, GPIO 47/48 sit in the green data list. On the
+7C they are SDA/SCL. If a "working" 7" YAML suddenly loses I2C devices after you move it onto a 7C,
+check that first before blaming the CH32V003 driver.
+
+Backlight is PWM on the expander, not a GPIO. Use the `waveshare_io_ch32v003` output platform (docs
+example for the 7B sets `inverted: true` and clamps duty via `safe_pwm_levels`). If every brightness
+value is still black, look for a separate backlight-enable on another expander pin — some Waveshare
+boards gate BL through pin 2 + `power_supply`.
+
+Sources for this board, not folklore: schematic PDF at
+[waveshareteam/ESP32-S3-Touch-LCD-7C](https://github.com/waveshareteam/ESP32-S3-Touch-LCD-7C/blob/73f8b90df1c684858e0c351afca3a09f5b96bdac/schematic/ESP32-S3-Touch-LCD-7C-schematic.pdf),
+component docs at
+[waveshare_io_ch32v003](https://esphome.io/components/waveshare_io_ch32v003/),
+community YAML at
+[HA t/1029890](https://community.home-assistant.io/t/waveshare-esp32-s3-touch-lcd-7c/1029890).
+
+Until ESPHome ships a real `ESP32-S3-TOUCH-LCD-7C` (or similar) preset, treat every timing number
+as board-revision-specific and keep the expander address / I2C pins next to the display block in
+the same file so the next person does not "fix" green by putting 47/48 back on the RGB bus.
 
 ## Still true: ili9xxx / st7789v / st7735 go away in 2027.5.0
 
 The 2026.10.0 release notes do not mention it, but the removal of `ili9xxx`, `st7789v` and `st7735` (PRs #20687 to #20690) is still scheduled for 2027.5.0. See [`MIGRATING-to-mipi_spi.md`](MIGRATING-to-mipi_spi.md).
 
-Sources: [ESPHome 2026.10.0 changelog](https://esphome.io/changelog/2026.10.0/), the 2026.10.0 [`lilygo.py`](https://github.com/esphome/esphome/blob/2026.10.0/esphome/components/mipi_spi/models/lilygo.py) and [`mipi_rgb/models/waveshare.py`](https://github.com/esphome/esphome/blob/2026.10.0/esphome/components/mipi_rgb/models/waveshare.py) model files, [`esphome/pins.py`](https://github.com/esphome/esphome/blob/2026.10.0/esphome/pins.py), and the PRs linked above.
+Sources: [ESPHome 2026.10.0 changelog](https://esphome.io/changelog/2026.10.0/), the 2026.10.0 [`lilygo.py`](https://github.com/esphome/esphome/blob/2026.10.0/esphome/components/mipi_spi/models/lilygo.py) and [`mipi_rgb/models/waveshare.py`](https://github.com/esphome/esphome/blob/2026.10.0/esphome/components/mipi_rgb/models/waveshare.py) model files, [`esphome/pins.py`](https://github.com/esphome/esphome/blob/2026.10.0/esphome/pins.py), and the PRs linked above, [HA t/1029890](https://community.home-assistant.io/t/waveshare-esp32-s3-touch-lcd-7c/1029890) (7C YAML + schematic link), and [waveshare_io_ch32v003 docs](https://esphome.io/components/waveshare_io_ch32v003/).
 
 ---
 Written by Display Engineer (TFT/LCD module maker, https://www.displayengineer.com). Corrections with test results are welcome as issues or PRs.
