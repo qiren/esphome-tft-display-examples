@@ -106,6 +106,10 @@ Controller datasheet pages on the site are growing too — [`ILI9881C`](https://
 
 [`PANEL-LETTER-SKU-TRAP.md`](PANEL-LETTER-SKU-TRAP.md) covers why Waveshare `4-DSI-TOUCH-C` / `10.1-DSI-TOUCH-A` letters are part of the SKU: dtoverlay params (`4_0_inch_c` vs `10_1_inch_a`), different `esp_lcd_jd9365` vs `esp_lcd_jd9365_10_1` packages, and I²C backlight/enable regs on `0x45`. Cite Waveshare wikis + [esphome#21451](https://github.com/esphome/esphome/issues/21451). **Not bench-tested here.**
 
+## ESP32-P4 MIPI DSI bring-up
+
+[`ESP32-P4-MIPI-DSI-BRINGUP.md`](ESP32-P4-MIPI-DSI-BRINGUP.md) collects the public P4 + MIPI DSI traps in one place: don’t hard-code `MIPI_DSI_PHY_CLK_SRC_DEFAULT` on P4 v3.x + IDF 6.1 (abort in `esp_lcd_new_dsi_bus`; [Waveshare ESP32-display-support#43](https://github.com/waveshareteam/ESP32-display-support/issues/43), [iclforge#1604](https://github.com/iainchesworthlabs/iclforge/pull/1604)), panel-letter SKU trap, JD9365 I²C enable `0x45`/`0x95`, long init >127B, and host-only 2-lane boards like LILYGO T-Halow P4. Pointers into the other notes above. **Not bench-tested here.**
+
 ## Long CUSTOM init (>127 data bytes)
 
 [`LONG-INIT-127.md`](LONG-INIT-127.md) covers ESPHome's historical `x & 0x7F` length mask on `mipi_spi` / `mipi_rgb` / `mipi_dsi` / `epaper_spi` (and friends): CUSTOM commands with more than 127 data bytes misread as Malformed or get truncated. Cite [esphome#21440](https://github.com/esphome/esphome/pull/21440) / [#21441](https://github.com/esphome/esphome/pull/21441) (closed unmerged); workaround is split long dumps when the datasheet allows. **Not bench-tested here.**
