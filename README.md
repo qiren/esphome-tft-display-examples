@@ -92,6 +92,8 @@ Controller datasheet pages on the site are growing too — [`ILI9881C`](https://
 
 [`ROUND-GC9A01A-LVGL.md`](ROUND-GC9A01A-LVGL.md) is a starting config for a 240x240 round panel with an LVGL arc and CST816 touch, plus the round-specific gotchas (invisible corners, 25% buffer, rotation under `lvgl:`). Not tested on hardware yet.
 
+[`HOST-COMPAT-MATRIX.md`](HOST-COMPAT-MATRIX.md) is how I read Waveshare-style host×panel wikis and BuyDisplay per-MCU tutorial tables when we draft `/compatible/*` pages (Pi cable generations + dtoverlay letters, ESP32-P4 `esp_lcd_*` / BSP brightness names, Arduino SPI FPS framing). Includes P4 IDF clock and 3.5″ lookalike pitfalls we already hit in public threads — **not bench-tested pinouts**.
+
 ## Need the datasheet or a different panel?
 
 Datasheets, pin-outs and init sequences can be requested on each product page or via
