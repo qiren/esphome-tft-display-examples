@@ -102,6 +102,10 @@ Controller datasheet pages on the site are growing too — [`ILI9881C`](https://
 
 [`JD9365-PANEL-ENABLE-I2C.md`](JD9365-PANEL-ENABLE-I2C.md) covers Waveshare 10.1-DSI-TOUCH-A on ESP32-P4: panel enable is I²C `0x45` / reg `0x95` (JD9365 vendor path), not a GPIO — without it `mipi_dsi` wedges after ~19 DCS cmds into watchdog/safe mode ([esphome#21451](https://github.com/esphome/esphome/issues/21451)). **Not bench-tested here.**
 
+## JD9365 runtime backlight stuck (PWM path)
+
+[`JD9365-BACKLIGHT-STUCK.md`](JD9365-BACKLIGHT-STUCK.md) covers the other half of that split: sysfs/PWM brightness writes succeed but the physical backlight freezes (often after a trip through 0) until full reboot — cite [techo5#253](https://github.com/HuskerMinion/techo5/issues/253) (Athena JD9365 KD-HSD `0x31`). Panel-enable I²C ≠ backlight PWM. **Not bench-tested here.**
+
 ## Panel letter / SKU trap (Waveshare DSI)
 
 [`PANEL-LETTER-SKU-TRAP.md`](PANEL-LETTER-SKU-TRAP.md) covers why Waveshare `4-DSI-TOUCH-C` / `10.1-DSI-TOUCH-A` letters are part of the SKU: dtoverlay params (`4_0_inch_c` vs `10_1_inch_a`), different `esp_lcd_jd9365` vs `esp_lcd_jd9365_10_1` packages, and I²C backlight/enable regs on `0x45`. Cite Waveshare wikis + [esphome#21451](https://github.com/esphome/esphome/issues/21451). **Not bench-tested here.**
