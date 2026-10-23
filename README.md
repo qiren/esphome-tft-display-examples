@@ -102,6 +102,10 @@ Controller datasheet pages on the site are growing too — [`ILI9881C`](https://
 
 [`JD9365-PANEL-ENABLE-I2C.md`](JD9365-PANEL-ENABLE-I2C.md) covers Waveshare 10.1-DSI-TOUCH-A on ESP32-P4: panel enable is I²C `0x45` / reg `0x95` (JD9365 vendor path), not a GPIO — without it `mipi_dsi` wedges after ~19 DCS cmds into watchdog/safe mode ([esphome#21451](https://github.com/esphome/esphome/issues/21451)). **Not bench-tested here.**
 
+## Long CUSTOM init (>127 data bytes)
+
+[`LONG-INIT-127.md`](LONG-INIT-127.md) covers ESPHome's historical `x & 0x7F` length mask on `mipi_spi` / `mipi_rgb` / `mipi_dsi` / `epaper_spi` (and friends): CUSTOM commands with more than 127 data bytes misread as Malformed or get truncated. Cite [esphome#21440](https://github.com/esphome/esphome/pull/21440) / [#21441](https://github.com/esphome/esphome/pull/21441) (closed unmerged); workaround is split long dumps when the datasheet allows. **Not bench-tested here.**
+
 ## Need the datasheet or a different panel?
 
 Datasheets, pin-outs and init sequences can be requested on each product page or via
