@@ -82,7 +82,7 @@ ESPHome removes those platforms in 2027.5.0 (PRs #20687 to #20690). [`MIGRATING-
 
 [`IDENTIFY-CONTROLLER.md`](IDENTIFY-CONTROLLER.md) shows how to read the ID over SPI before picking a `mipi_spi` model: ST7789V answers `85 85 52` (04h, or DAh/DBh/DCh one byte at a time), some ST7789P3 boards answer `81 81 b3` (same family), ILI9341 answers `00 93 41` on D3h.
 
-[`TOUCH-IC-NOTES.md`](TOUCH-IC-NOTES.md) covers the Waveshare 2.8" CST328→CST3530 silent swap and GT911 I2C `0x5D` vs `0x14`.
+[`TOUCH-IC-NOTES.md`](TOUCH-IC-NOTES.md) covers the Waveshare 2.8" CST328→CST3530 silent swap, GT911 I2C `0x5D` vs `0x14`, and ICNT86 default `0x48` on the Waveshare 2.90″ e-paper Touch HAT.
 
 [`VERIFY-TOUCH-IC-I2C.md`](VERIFY-TOUCH-IC-I2C.md) is the bring-up checklist: I2C scan first, then match GT911 `0x5D`/`0x14` (and the RST+INT latch) or CST3530 `0x58` before editing YAML.
 
