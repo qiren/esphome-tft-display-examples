@@ -122,6 +122,10 @@ Controller datasheet pages on the site are growing too — [`ILI9881C`](https://
 
 [`XPT2046-SHARED-CS.md`](XPT2046-SHARED-CS.md) covers the "panel paints, resistive touch dead" trap on SPI TFT + XPT2046 boards: `…ili9341…` Marauder bins on an ST7789 glass, and TFT CS tied to touch CS. Cites [ESP-Web-Flasher#2](https://github.com/Aryann019x/ESP-Web-Flasher/issues/2) (Bruce ESP32-S3 + ST7789 2.8″, still open when written). **Not bench-tested here.**
 
+## FPC pin 1 orientation
+
+[`FPC-PIN1-ORIENTATION.md`](FPC-PIN1-ORIENTATION.md) covers why “pin 1 on the left of the AliExpress photo” is not a wiring rule: Waveshare 18-pin FPC tables are 1-based net lists (not orientation photos), Crystalfontz pin 1 is whatever the datasheet drawing says (e.g. LED+ on CFAF128128B), and electronics.SE #670078 says there is no industry standard for which end is pin 1. Trust the module drawing over a marketplace thumbnail. **Not bench-tested here.**
+
 ## Need the datasheet or a different panel?
 
 Datasheets, pin-outs and init sequences can be requested on each product page or via
