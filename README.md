@@ -114,6 +114,10 @@ Controller datasheet pages on the site are growing too — [`ILI9881C`](https://
 
 [`LONG-INIT-127.md`](LONG-INIT-127.md) covers ESPHome's historical `x & 0x7F` length mask on `mipi_spi` / `mipi_rgb` / `mipi_dsi` / `epaper_spi` (and friends): CUSTOM commands with more than 127 data bytes misread as Malformed or get truncated. Cite [esphome#21440](https://github.com/esphome/esphome/pull/21440) / [#21441](https://github.com/esphome/esphome/pull/21441) (closed unmerged); workaround is split long dumps when the datasheet allows. **Not bench-tested here.**
 
+## ST7789 + XPT2046 shared CS / wrong Marauder bin
+
+[`XPT2046-SHARED-CS.md`](XPT2046-SHARED-CS.md) covers the "panel paints, resistive touch dead" trap on SPI TFT + XPT2046 boards: `…ili9341…` Marauder bins on an ST7789 glass, and TFT CS tied to touch CS. Cites [ESP-Web-Flasher#2](https://github.com/Aryann019x/ESP-Web-Flasher/issues/2) (Bruce ESP32-S3 + ST7789 2.8″, still open when written). **Not bench-tested here.**
+
 ## Need the datasheet or a different panel?
 
 Datasheets, pin-outs and init sequences can be requested on each product page or via
