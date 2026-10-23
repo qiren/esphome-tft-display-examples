@@ -85,7 +85,42 @@ addressing width and sits at `0x58`. Details and the external driver link are
 in [`TOUCH-IC-NOTES.md`](TOUCH-IC-NOTES.md). The verify step is still the
 same: scan, then pick the platform that matches the address you actually got.
 
-## 4. What "verified" means for me
+## 4. When GT911 "works" but prints something like 74×70
+
+This one bit me in the logs, not on my own desk. Someone on a CrowPanel-class
+2.8" board (ST7789 SPI panel fine, touch sold as GT911) forced the I²C device
+to the vendor's published `0x38`, then `gt911` in lvgl_micropython printed
+roughly:
+
+```
+Touch resolution: width=74, height=70
+(72, 70)
+```
+
+Product id came out as garbage bytes, firmware config width/height writes did
+nothing useful, and calibration / slider input stayed dead. Public thread:
+[lvgl_micropython#611](https://github.com/lvgl-micropython/lvgl_micropython/issues/611).
+
+What I take from that, without owning that board:
+
+- A real GT911 almost never lives at `0x38`. That address is the FT5x06 /
+  FT6x06 neighbourhood on a lot of modules (see the scan list above). GT911
+  wants `0x5D` or `0x14` after the RST+INT latch. If the seller PDF says
+  `0x38`, trust an I2C scan over the PDF.
+- `hw_size` around 70×70 is not a "close enough, just calibrate" situation.
+  It usually means the driver read senseless config registers — wrong chip,
+  wrong address, or the GT911 config block never got programmed. Do **not**
+  run calibration on top of that; you will just burn an evening.
+- Before touching transform / LVGL input, print product id / firmware version
+  from the driver. A healthy GT911 product string looks like `911`. Garbage
+  product id + tiny resolution = stop and re-verify the IC, same as an empty
+  scan.
+
+I have not reproduced the 74×70 numbers on a CrowPanel here. The symptom and
+addresses above are from that public issue log plus the address notes already
+in this file, not from our analyser.
+
+## 5. What "verified" means for me
 
 I call the touch IC verified when:
 
@@ -96,12 +131,14 @@ I call the touch IC verified when:
 
 Until those three are true I do not touch `transform:`, calibration, or LVGL
 input wiring. Wrong chip / wrong address looks identical to "transform is
-off" from the UI side.
+off" from the UI side. Same rule for a driver that cheerfully prints a ~70×70
+touch size while the LCD is 240×320 — fix identity first.
 
 ---
 
 Untested on my bench for this exact write-up. Addresses and the GT911 reset
 latch come from ESPHome `gt911` source (PRIMARY 0x5D / SECONDARY 0x14 and the
 INT-as-output reset path in `setup()`). The 7C expander note is from Waveshare's
-public wiki / HA thread pin tables. This repo is maintained by
+public wiki / HA thread pin tables. The 74×70 case is from the public
+lvgl_micropython#611 log. This repo is maintained by
 [Display Engineer](https://www.displayengineer.com/), a display module maker.
