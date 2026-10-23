@@ -41,6 +41,30 @@ Waveshare's ESP32-S3-Touch-LCD-7C thread on the HA forum has the GT911 on
 `0x5D` with reset through the CH32V003 expander — same primary address, just
 a different reset path.
 
+## ICNT86: default 0x48 on Waveshare e-paper touch HATs
+
+ESPHome 2026.10.0 shipped a new touchscreen platform for the
+[ICNT86](https://esphome.io/components/touchscreen/icnt86/)
+([esphome#18331](https://github.com/esphome/esphome/pull/18331)). The people who
+hit this are usually on a **Waveshare Touch HAT** for the 2.90″ e-paper
+(2.90inv2 / 2.90inv2-r2), not on a colour TFT — but the bring-up pattern is the
+same as every other I2C touch IC we care about: wrong address or missing INT
+and the panel looks "dead" while the display side still works.
+
+The ESPHome schema defaults the I²C address to **`0x48`**
+(`i2c_device_schema(0x48)` in `touchscreen.py` on the 2026.10.0 tag). That
+matches what the PR author and Minikea used on an ESP32-C6 / ESP32 with the
+Waveshare HAT. Optional `interrupt_pin` and `reset_pin` are in the schema; the
+docs example wires both.
+
+If an I2C scan never shows `0x48`, you are not talking to an ICNT86 (or the HAT
+isn't powered / the bus pins are wrong). Don't paste a GT911 or CST816 block on
+it — those chips live at completely different addresses.
+
+I have not run an ICNT86 HAT on the bench here. The address and board note
+above are from the ESPHome 2026.10.0 source, the merged PR, and the official
+component page, not from our own analyser.
+
 ---
 
 Not bench-tested by us on these exact Waveshare revisions. The addresses and
