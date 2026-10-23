@@ -84,6 +84,8 @@ ESPHome removes those platforms in 2027.5.0 (PRs #20687 to #20690). [`MIGRATING-
 
 [`TOUCH-IC-NOTES.md`](TOUCH-IC-NOTES.md) covers the Waveshare 2.8" CST328→CST3530 silent swap and GT911 I2C `0x5D` vs `0x14`.
 
+[`VERIFY-TOUCH-IC-I2C.md`](VERIFY-TOUCH-IC-I2C.md) is the bring-up checklist: I2C scan first, then match GT911 `0x5D`/`0x14` (and the RST+INT latch) or CST3530 `0x58` before editing YAML.
+
 ## Round GC9A01A with LVGL
 
 [`ROUND-GC9A01A-LVGL.md`](ROUND-GC9A01A-LVGL.md) is a starting config for a 240x240 round panel with an LVGL arc and CST816 touch, plus the round-specific gotchas (invisible corners, 25% buffer, rotation under `lvgl:`). Not tested on hardware yet.
