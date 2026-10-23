@@ -84,7 +84,9 @@ ESPHome removes those platforms in 2027.5.0 (PRs #20687 to #20690). [`MIGRATING-
 
 [`TOUCH-IC-NOTES.md`](TOUCH-IC-NOTES.md) covers the Waveshare 2.8" CST328→CST3530 silent swap, GT911 I2C `0x5D` vs `0x14`, and ICNT86 default `0x48` on the Waveshare 2.90″ e-paper Touch HAT.
 
-[`VERIFY-TOUCH-IC-I2C.md`](VERIFY-TOUCH-IC-I2C.md) is the bring-up checklist: I2C scan first, then match GT911 `0x5D`/`0x14` (and the RST+INT latch) or CST3530 `0x58` before editing YAML.
+Controller datasheet pages on the site are growing too — [`ILI9881C`](https://www.displayengineer.com/driver-ic/ili9881c) is live if you landed here from an MIPI DSI / ESP32-P4 board note.
+
+[`VERIFY-TOUCH-IC-I2C.md`](VERIFY-TOUCH-IC-I2C.md) is the bring-up checklist: I2C scan first, then match GT911 `0x5D`/`0x14` (and the RST+INT latch) or CST3530 `0x58` before editing YAML. Also covers the "touch reports ~74×70" false-geometry trap (often wrong I²C address / wrong chip, not a calibration problem).
 
 ## Round GC9A01A with LVGL
 
