@@ -98,6 +98,10 @@ Controller datasheet pages on the site are growing too — [`ILI9881C`](https://
 
 [`ST77922-SLPOUT-BLACK.md`](ST77922-SLPOUT-BLACK.md) covers the "backlight on, logs clean, panel black" trap on ST77922 (and similar Sitronix parts): `mipi_spi` still appends only **10 ms** after `SLPOUT` before `DISPON`, while the silicon wants ~120 ms. Workaround is your own `[0x11]` + `delay 200ms` at the end of `init_sequence` ([esphome#19010](https://github.com/esphome/esphome/issues/19010)). **Not bench-tested here.**
 
+## JD9365 / Waveshare 10.1 DSI panel enable
+
+[`JD9365-PANEL-ENABLE-I2C.md`](JD9365-PANEL-ENABLE-I2C.md) covers Waveshare 10.1-DSI-TOUCH-A on ESP32-P4: panel enable is I²C `0x45` / reg `0x95` (JD9365 vendor path), not a GPIO — without it `mipi_dsi` wedges after ~19 DCS cmds into watchdog/safe mode ([esphome#21451](https://github.com/esphome/esphome/issues/21451)). **Not bench-tested here.**
+
 ## Need the datasheet or a different panel?
 
 Datasheets, pin-outs and init sequences can be requested on each product page or via
