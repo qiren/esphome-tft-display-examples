@@ -86,6 +86,10 @@ ESPHome removes those platforms in 2027.5.0 (PRs #20687 to #20690). [`MIGRATING-
 
 Controller datasheet pages on the site are growing too — [`ILI9881C`](https://www.displayengineer.com/driver-ic/ili9881c) is live if you landed here from an MIPI DSI / ESP32-P4 board note.
 
+Touch controller pages on the site (sources listed on each page): [`XPT2046`](https://www.displayengineer.com/driver-ic/xpt2046) (resistive: calibration, CYD pins, Raspberry Pi `ads7846` overlay), [`GT911`](https://www.displayengineer.com/driver-ic/gt911), [`FT6336`](https://www.displayengineer.com/driver-ic/ft6336), [`CST816S`](https://www.displayengineer.com/driver-ic/cst816s) and [`CST328`](https://www.displayengineer.com/driver-ic/cst328) (the CST3530 swap).
+
+Board notes: [ESP32-2432S028R (CYD)](https://www.displayengineer.com/compatible/esp32-2432s028r-cyd), [ESP32-1732S019 (N / C touch versions, 35 px column offset)](https://www.displayengineer.com/compatible/esp32-1732s019), [LilyGO T-Display-S3 (i80 bus, GPIO15 on battery)](https://www.displayengineer.com/compatible/lilygo-t-display-s3).
+
 [`VERIFY-TOUCH-IC-I2C.md`](VERIFY-TOUCH-IC-I2C.md) is the bring-up checklist: I2C scan first, then match GT911 `0x5D`/`0x14` (and the RST+INT latch) or CST3530 `0x58` before editing YAML. Also covers the "touch reports ~74×70" false-geometry trap (often wrong I²C address / wrong chip, not a calibration problem).
 
 ## Round GC9A01A with LVGL
